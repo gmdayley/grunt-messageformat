@@ -8,57 +8,50 @@
 
 'use strict';
 
-var messageformat = require('messageformat');
+var messageformat = require('messageformat'),
+    shell = require('shelljs');
 
 module.exports = function (grunt) {
 
-    // Please see the Grunt documentation for more information regarding task
-    // creation: http://gruntjs.com/creating-tasks
+    grunt.registerTask('messageformat', 'Compile MessageFormat.js files.', function () {
 
-    grunt.registerMultiTask('messageformat', 'Compile MessageFormat.js files.', function () {
-
-        // Merge task-specific and/or target-specific options with these defaults.
+        // default options
         var options = this.options({
-            punctuation: '.',
-            separator: ', '
+            locale: undefined,
+            inputdir: undefined,
+            output: undefined,
+            combine: undefined,
+            namespace: 'i18n',
+            include: undefined,
+            verbose: false
         });
 
-        // Iterate over all specified file groups.
-        this.files.forEach(function (file) {
+        // check the required options
+        if (options.locale === undefined) {
+            grunt.log.warn('Locale is a required option.');
+            return false;
+        }
 
-            // Concat specified files.
-            var src = file.src.filter(function (filepath) {
+        if (options.inputdir === undefined) {
+            grunt.log.warn('An input directory is a required option.');
+            return false;
+        }
 
-                // Warn on and remove invalid source files (if nonull was set).
-                if (!grunt.file.exists(filepath)) {
-                    grunt.log.warn('Source file "' + filepath + '" not found.');
-                    return false;
-                }
-                else {
-                    return true;
-                }
+        if (options.locale === undefined) {
+            grunt.log.warn('An output directory is a required option.');
+            return false;
+        }
 
-            }).map(function (filepath) {
+        // assemble the command
+        var cmd = 'messageformat -l ' + options.locale;
+        cmd += (options.combine === undefined) ? '' : ' --combine ' + options.combine;
+        cmd += (options.namespace === 'i18n') ? '' : ' --namespace ' + options.namespace;
+        cmd += (options.include === undefined) ? '' : ' --include ' + options.include;
+        cmd += (options.verbose === false) ? '' : ' --verbose ' + options.verbose;
+        cmd += ' ' + options.inputdir + ' ' + options.output;
 
-                    // Read file source.
-                    return grunt.file.read(filepath);
-
-                }).map(function(filepath) {
-
-                    // get the locale from the file name (assuming format example of en.json)
-                    grunt.log.writeln(filepath);
-
-                })
-                .join(grunt.util.normalizelf(options.separator));
-
-            // Handle options.
-            src += options.punctuation;
-
-            // Write the destination file.
-            grunt.file.write(file.dest, src);
-
-            // Print a success message.
-            grunt.log.writeln('File "' + file.dest + '" created.');
-        });
+        if (shell.exec(cmd).code !== 0) {
+            grunt.log.error('Error compiling with messageformat.js');
+        }
     });
 };
