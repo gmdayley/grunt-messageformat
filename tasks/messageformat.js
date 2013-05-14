@@ -37,7 +37,7 @@ module.exports = function (grunt) {
             return false;
         }
 
-        if (options.locale === undefined) {
+        if (options.output === undefined) {
             grunt.log.warn('An output directory is a required option.');
             return false;
         }
